@@ -15,6 +15,10 @@
   "engines": {
     "node": ">=20"
   },
+  "scripts": {
+    "build": "node --check index.mjs",
+    "test": "node test-stdio.mjs"
+  },
   "keywords": [
     "mcp",
     "modelcontextprotocol",
