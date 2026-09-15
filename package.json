@@ -6,7 +6,7 @@
   "license": "MIT",
   "type": "module",
   "bin": {
-    "agentmd-mcp": "./index.mjs"
+    "agentmd-mcp": "index.mjs"
   },
   "files": [
     "index.mjs",
