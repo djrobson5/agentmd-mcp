@@ -16,6 +16,9 @@ import { McpServer } from "@modelcontextprotocol/server";
 import { serveStdio } from "@modelcontextprotocol/server/stdio";
 import { z } from "zod";
 import { readFile } from "node:fs/promises";
+import { createRequire } from "node:module";
+
+const { version: VERSION } = createRequire(import.meta.url)("./package.json");
 
 const BASE_URL = (
   process.env.AGENTMD_BASE_URL ?? "https://www.getagentmd.com"
@@ -75,7 +78,7 @@ function asError(err) {
 
 serveStdio(() => {
   const server = new McpServer(
-    { name: "agentmd", version: "0.1.0" },
+    { name: "agentmd", version: VERSION },
     { capabilities: { tools: {} } },
   );
 
@@ -84,9 +87,19 @@ serveStdio(() => {
     {
       title: "Convert URL to markdown",
       description:
-        "Fetch a URL (web page, PDF, DOCX, etc.) and convert it to clean, LLM-ready markdown. Strips navigation and boilerplate from web pages and preserves tables.",
+        "Fetches a document at an http(s) URL — web page, PDF, DOCX, HTML, Markdown, or plain text — and converts it to clean, LLM-ready markdown. Use this instead of convert_file_to_markdown when the document lives on the network rather than on the filesystem of the machine running this server, and instead of convert_document_to_markdown when you hold a link rather than the raw bytes; it is the only one of the three that fetches the source itself. Returns one markdown text block: the detected title as a leading `# <title>` line when one is found, a `> Warnings: ...` blockquote line when the converter reports warnings, tables preserved as GFM, and for web pages navigation and boilerplate stripped with relative links rewritten to absolute URLs. Limits: 25 MB per document, and PDFs are text-extraction only, so scanned or image-only PDFs yield little or no text (OCR is not available yet). Requires AGENTMD_API_KEY; on a 401, a network or fetch failure, or an unsupported format it returns an isError result whose text explains what went wrong. Each successful call consumes one conversion from the account quota.",
+      annotations: {
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: true,
+      },
       inputSchema: z.object({
-        url: z.string().describe("The http(s) URL of the document or page to convert"),
+        url: z
+          .string()
+          .describe(
+            "Absolute http(s) URL of the page or document to fetch and convert, e.g. https://example.com/report.pdf. Must be publicly reachable from the AgentMD service; URLs behind a login, a paywall, or a private network will fail.",
+          ),
       }),
     },
     async ({ url }) => {
@@ -103,9 +116,19 @@ serveStdio(() => {
     {
       title: "Convert a local file to markdown",
       description:
-        "Read a document from the local filesystem (PDF, DOCX, HTML, plain text) and convert it to clean, LLM-ready markdown.",
+        "Reads a document from the local filesystem by absolute path and converts it to clean, LLM-ready markdown. Use this instead of convert_url_to_markdown when the document is already saved on disk, and instead of convert_document_to_markdown when you have a path and would otherwise have to read and base64-encode the bytes yourself — this tool does that reading and encoding for you. Returns one markdown text block: the detected title as a leading `# <title>` line when one is found, a `> Warnings: ...` blockquote line when the converter reports warnings, and tables preserved as GFM. Supported formats are PDF, DOCX, HTML, Markdown, and plain text, up to 25 MB per document; PDFs are text-extraction only, so scanned or image-only PDFs yield little or no text (OCR is not available yet). Requires AGENTMD_API_KEY; on a missing or unreadable file, a 401, a network failure, or an unsupported format it returns an isError result whose text explains what went wrong. Each successful call consumes one conversion from the account quota.",
+      annotations: {
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+      },
       inputSchema: z.object({
-        path: z.string().describe("Absolute path to the document on this machine"),
+        path: z
+          .string()
+          .describe(
+            "Absolute path to the document on the filesystem of the machine running this MCP server, not the client machine (e.g. /home/me/docs/report.pdf or C:\\\\docs\\\\report.pdf). The file is read locally and its bytes are sent to the AgentMD API; the basename is used for format detection, so keep the file extension.",
+          ),
       }),
     },
     async ({ path }) => {
@@ -128,13 +151,25 @@ serveStdio(() => {
     {
       title: "Convert document bytes to markdown",
       description:
-        "Convert base64-encoded document contents (PDF, DOCX, HTML, plain text) to clean, LLM-ready markdown. Use when you already hold the bytes rather than a path or URL.",
+        "Converts base64-encoded document bytes that you already hold into clean, LLM-ready markdown, without reading a file or fetching a URL. Use this instead of convert_file_to_markdown when the bytes came from somewhere other than this machine's filesystem (an upload, an earlier tool result, memory), and instead of convert_url_to_markdown when there is no fetchable link to the source. Returns one markdown text block: the detected title as a leading `# <title>` line when one is found, a `> Warnings: ...` blockquote line when the converter reports warnings, and tables preserved as GFM. Supported formats are PDF, DOCX, HTML, Markdown, and plain text, up to 25 MB per document — base64 inflates the payload by about a third, so prefer convert_file_to_markdown or convert_url_to_markdown for large files — and PDFs are text-extraction only, so scanned or image-only PDFs yield little or no text (OCR is not available yet). Requires AGENTMD_API_KEY; on a 401, a network failure, malformed base64, or an unsupported format it returns an isError result whose text explains what went wrong. Each successful call consumes one conversion from the account quota.",
+      annotations: {
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+      },
       inputSchema: z.object({
-        base64: z.string().describe("Base64-encoded file contents"),
+        base64: z
+          .string()
+          .describe(
+            "The document's full contents encoded as standard base64 (RFC 4648: A-Z a-z 0-9 + / with = padding). Pass the encoded string on its own — no `data:` URI prefix, no media type, no surrounding quotes.",
+          ),
         filename: z
           .string()
           .optional()
-          .describe("Original filename, e.g. report.pdf — helps format detection"),
+          .describe(
+            "Original filename including its extension, e.g. report.pdf or notes.docx. Used for format detection when the bytes alone are ambiguous (HTML vs. Markdown vs. plain text) and to seed the document title. Optional, but supplying it makes detection markedly more reliable.",
+          ),
       }),
     },
     async ({ base64, filename }) => {

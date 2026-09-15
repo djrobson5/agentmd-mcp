@@ -35,6 +35,27 @@ claude mcp add agentmd --env AGENTMD_API_KEY=<your-key> -- npx -y agentmd-mcp
 }
 ```
 
+**Docker**
+
+```bash
+docker build -t agentmd-mcp .
+docker run -i --rm -e AGENTMD_API_KEY=<your-key> agentmd-mcp
+```
+
+The image runs the stdio server, so pass `-i`; the API key is supplied at run time with `-e` rather than baked into the image. To wire the container into an MCP client:
+
+```json
+{
+  "mcpServers": {
+    "agentmd": {
+      "command": "docker",
+      "args": ["run", "-i", "--rm", "-e", "AGENTMD_API_KEY", "agentmd-mcp"],
+      "env": { "AGENTMD_API_KEY": "<your-key>" }
+    }
+  }
+}
+```
+
 **Remote (no install)** — the hosted server speaks streamable HTTP directly:
 
 ```bash
