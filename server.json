@@ -1,6 +1,7 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.djrobson5/agentmd",
+  "title": "AgentMD",
   "description": "Convert PDF, DOCX, HTML, and URLs to clean, LLM-ready markdown with tables preserved",
   "repository": {
     "url": "https://github.com/djrobson5/agentmd-mcp",
@@ -8,6 +9,18 @@
   },
   "version": "0.1.2",
   "websiteUrl": "https://www.getagentmd.com",
+  "icons": [
+    {
+      "src": "https://www.getagentmd.com/icon-512.png",
+      "mimeType": "image/png",
+      "sizes": ["512x512"]
+    },
+    {
+      "src": "https://www.getagentmd.com/icon-64.png",
+      "mimeType": "image/png",
+      "sizes": ["64x64"]
+    }
+  ],
   "packages": [
     {
       "registryType": "npm",
