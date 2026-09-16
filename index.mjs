@@ -91,7 +91,7 @@ serveStdio(() => {
       annotations: {
         readOnlyHint: true,
         destructiveHint: false,
-        idempotentHint: true,
+        idempotentHint: false,
         openWorldHint: true,
       },
       inputSchema: z.object({
@@ -120,8 +120,8 @@ serveStdio(() => {
       annotations: {
         readOnlyHint: true,
         destructiveHint: false,
-        idempotentHint: true,
-        openWorldHint: false,
+        idempotentHint: false,
+        openWorldHint: true,
       },
       inputSchema: z.object({
         path: z
@@ -155,8 +155,8 @@ serveStdio(() => {
       annotations: {
         readOnlyHint: true,
         destructiveHint: false,
-        idempotentHint: true,
-        openWorldHint: false,
+        idempotentHint: false,
+        openWorldHint: true,
       },
       inputSchema: z.object({
         base64: z
