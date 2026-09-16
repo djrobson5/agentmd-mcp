@@ -1,6 +1,6 @@
 {
   "name": "agentmd-mcp",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "MCP server that converts PDF, DOCX, HTML, and URLs to clean, LLM-ready markdown via the AgentMD API",
   "mcpName": "io.github.djrobson5/agentmd",
   "license": "MIT",
